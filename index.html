@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Music Player</title>
+ <link rel="icon" type="image/x-icon" href="C:\Users\hp\Arunima\Lunariscr.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: Cursive;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    body.fade-in {
+      opacity: 1;
+    }
+
+    .player {
+      background: #222;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      text-align: center;
+      width: 320px;
+    }
+
+    .album-art {
+      width: 100%;
+      height: 300px;
+      background-color: #444;
+      background-size: cover;
+      background-position: center;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin: 10px 0 5px;
+    }
+
+    .artist-name {
+      color: #ccc;
+      font-size: 14px;
+      font-style: italic;
+      margin-bottom: 20px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 20px 0;
+    }
+
+    .controls button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      font-family: cursive;
+      cursor: pointer;
+      padding: 10px;
+      transition: color 0.3s ease;
+    }
+
+    .controls button:hover {
+      color: #1DB954;
+    }
+
+    .progress-container {
+      background: #555;
+      height: 8px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .progress {
+      background: #1DB954;
+      height: 8px;
+      width: 0%;
+      border-radius: 5px;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: #555;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-family: cursive;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      transition: background-color 0.3s ease;
+      z-index: 1000;
+    }
+    .back-btn:hover {
+      background-color: #17a745;
+    }
+
+    .repeat-on {
+      color: #1DB954 !important;
+    }
+  </style>
+<style>
+  #branding {
+    position: fixed;
+    top: 0;
+    left: 90%;
+    transform: translateX(-50%);
+    background-color: #1e1e1e;
+    padding: 20px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10000; /* very high so it stays on top */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+    width: max-content;
+    border-radius: 0 0 15px 15px;
+  }
+
+  #branding .logo {
+    height: 77px;
+  }
+
+  /* Add some top padding to your body or main container so content won't be hidden under the fixed header */
+  body {
+    padding-top: 70px; /* adjust this height according to your header */
+  }
+</style>
+</head>
+<body>
+<header id="branding">
+    <img src="C:\Users\hp\Arunima\Lunariscr.png" alt="Lunaris Logo" class="logo" />
+  </header>
+
+<div class="player">
+  <button class="back-btn" onclick="goBack()">←</button>
+  <div class="album-art" id="album-art"></div>
+  <div class="song-info">
+    <h2 id="song-title">Song Title</h2>
+    <div id="artist-name" class="artist-name">Artist Name</div>
+  </div>
+
+  <audio id="audio" src=""></audio>
+
+  <div class="controls">
+    <button onclick="prevSong()"><i class="fas fa-backward"></i></button>
+    <button onclick="togglePlay()" id="play-btn"><i class="fas fa-play"></i></button>
+    <button onclick="nextSong()"><i class="fas fa-forward"></i></button>
+    <button onclick="toggleRepeat()" id="repeat-btn"><i class="fas fa-redo"></i></button>
+  </div>
+
+  <div class="progress-container" onclick="setProgress(event)">
+    <div class="progress" id="progress"></div>
+  </div>
+</div>
+
+<script>
+  window.onload = () => {
+    document.body.classList.add('fade-in');
+  };
+
+  const audio = document.getElementById('audio');
+  const playBtn = document.getElementById('play-btn');
+  const repeatBtn = document.getElementById('repeat-btn');
+  const progress = document.getElementById('progress');
+  const progressContainer = document.querySelector('.progress-container');
+  const albumArt = document.getElementById('album-art');
+  const songTitle = document.getElementById('song-title');
+  const artistName = document.getElementById('artist-name');
+
+  const songs = [
+    {
+      title: 'Just a Tale',
+      artist: 'Nont Tanont',
+      file: 'file:///C:/Users/hp/Arunima/Just%20a%20tale.mp3',
+      cover: 'https://i.pinimg.com/736x/db/76/15/db7615fb60f432b4fccd4f65eb73163e.jpg'
+    },
+    {
+      title: 'Just a Friend?',
+      artist: 'Nanon Korapat',
+      file: 'file:///C:/Users/hp/Arunima/peun.mp3',
+      cover: 'https://i.pinimg.com/736x/00/99/a5/0099a549c41c923c3540ccf4cd00543b.jpg'
+    },
+    {
+      title: "Why Don't You Stay",
+      artist: 'Jeff Satur',
+      file: 'file:///C:/Users/hp/Arunima/wdys.mp3',
+      cover: 'https://i.pinimg.com/736x/8f/42/91/8f4291aa701925955a27212c9f307023.jpg'
+    }
+  ];
+
+  const params = new URLSearchParams(window.location.search);
+  let currentSongIndex = parseInt(params.get('index')) || 0;
+  let isPlaying = false;
+  let isRepeat = false;
+  const isPlayAll = params.get('playAll') === 'true';
+
+  function loadSong(index) {
+    const song = songs[index];
+    audio.src = song.file;
+    songTitle.textContent = song.title;
+    artistName.textContent = song.artist;
+    albumArt.style.backgroundImage = `url('${song.cover}')`;
+  }
+
+  function togglePlay() {
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+  }
+
+  function nextSong() {
+    currentSongIndex = (currentSongIndex + 1) % songs.length;
+    loadSong(currentSongIndex);
+    audio.play();
+  }
+
+  function prevSong() {
+    currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+    loadSong(currentSongIndex);
+    audio.play();
+  }
+
+  function toggleRepeat() {
+    isRepeat = !isRepeat;
+    repeatBtn.classList.toggle('repeat-on', isRepeat);
+  }
+
+  audio.addEventListener('play', () => {
+    isPlaying = true;
+    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+  });
+
+  audio.addEventListener('pause', () => {
+    isPlaying = false;
+    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    const percent = (audio.currentTime / audio.duration) * 100;
+    progress.style.width = percent + '%';
+  });
+
+  audio.addEventListener('ended', () => {
+    if (isRepeat) {
+      audio.currentTime = 0;
+      audio.play();
+    } else if (isPlayAll) {
+      if (currentSongIndex < songs.length - 1) {
+        nextSong();
+      } else {
+        // If it's the last song and repeat is off, stop playing
+        isPlaying = false;
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+      }
+    }
+  });
+
+  function setProgress(e) {
+    const width = progressContainer.clientWidth;
+    const clickX = e.offsetX;
+    const duration = audio.duration;
+    audio.currentTime = (clickX / width) * duration;
+  }
+
+  function goBack() {
+    document.body.classList.remove('fade-in');
+    document.body.classList.add('fade-out');
+    setTimeout(() => {
+      window.location.href = 'file:///C:/Users/hp/Arunima/letsee2.html';
+    }, 500);
+  }
+
+  loadSong(currentSongIndex);
+
+  if (isPlayAll) {
+    audio.play();
+  }
+</script>
+
+</body>
+</html>
